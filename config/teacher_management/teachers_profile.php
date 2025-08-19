@@ -1,6 +1,7 @@
 <?php
 session_start();
 include '../dbConnection.php';
+include '../navbar.php';
 
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'teacher') {
     header("Location: ../login.php");

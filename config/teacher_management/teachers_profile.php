@@ -152,7 +152,6 @@ $user = $result->fetch_assoc();
         .btn-primary:hover { background: #15803d; transform: translateY(-2px); box-shadow: 0 8px 25px rgba(22, 163, 74, 0.4); }
         .btn-secondary { background: #dc2626; color: white; box-shadow: 0 4px 15px rgba(220, 38, 38, 0.3); }
         .btn-secondary:hover { background: #b91c1c; transform: translateY(-2px); box-shadow: 0 8px 25px rgba(220, 38, 38, 0.4); }
-
         .btn-info { background: #2563eb; color: white; box-shadow: 0 4px 15px rgba(37,99,235,0.3); }
         .btn-info:hover { background: #1e40af; transform: translateY(-2px); box-shadow: 0 8px 25px rgba(37,99,235,0.4); }
 
@@ -182,7 +181,7 @@ $user = $result->fetch_assoc();
         <div class="profile-header">
             <div class="profile-avatar" onclick="document.getElementById('avatarInput').click();">
                 <?php if (!empty($user['profile_picture'])): ?>
-                    <img src="../uploads/<?php echo htmlspecialchars($user['profile_picture']); ?>" alt="Profile Picture">
+                    <img src="../Uploads/<?php echo htmlspecialchars($user['profile_picture']); ?>" alt="Profile Picture">
                 <?php else: ?>
                     <i class="fas fa-chalkboard-teacher"></i>
                 <?php endif; ?>
@@ -224,6 +223,10 @@ $user = $result->fetch_assoc();
                 <a href="../subject_management/subject_list.php" class="btn btn-primary">
                     <i class="fas fa-list-alt"></i> Manage Subjects
                 </a>
+
+                <a href="../student_management/student_list.php" class="btn btn-primary">
+                    <i class="fas fa-user-plus"></i>Student List
+                </a>
                 
                 <a href="../logout.php" class="btn btn-secondary">
                     <i class="fas fa-sign-out-alt"></i> Logout
@@ -245,7 +248,7 @@ $user = $result->fetch_assoc();
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        avatar.innerHTML = `<img src="../uploads/${data.filename}" alt="Profile Picture"><div class="avatar-upload"><i class="fas fa-camera"></i></div>`;
+                        avatar.innerHTML = `<img src="../Uploads/${data.filename}" alt="Profile Picture"><div class="avatar-upload"><i class="fas fa-camera"></i></div>`;
                         showMessage('Profile picture updated successfully!', 'success');
                     } else {
                         avatar.innerHTML = originalContent;

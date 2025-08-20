@@ -45,6 +45,51 @@ if ($selected_subject_id) {
     while ($row = $result->fetch_assoc()) {
         $students[] = $row;
     }
+
+    // Calculate ranks, grades, min, max, avg
+    $graded = array_filter($students, function($s) { return !empty($s['marks']); });
+    if ($graded) {
+        usort($graded, function($a, $b) {
+            return $b['marks'] - $a['marks'];
+        });
+
+        $ranks = [];
+        $rank = 1;
+        $prev_marks = null;
+        $i = 0;
+        foreach ($graded as $stu) {
+            if ($prev_marks !== null && $stu['marks'] < $prev_marks) {
+                $rank = $i + 1;
+            }
+            $ranks[$stu['id']] = $rank;
+            $prev_marks = $stu['marks'];
+            $i++;
+        }
+
+        $marks_array = array_column($graded, 'marks');
+        $min_marks = min($marks_array);
+        $max_marks = max($marks_array);
+        $avg_marks = round(array_sum($marks_array) / count($marks_array), 2);
+    } else {
+        $min_marks = $max_marks = $avg_marks = '-';
+    }
+}
+
+function get_grade($mark) {
+    if ($mark >= 75) return 'A';
+    elseif ($mark >= 60) return 'B';
+    elseif ($mark >= 40) return 'S';
+    else return 'F';
+}
+
+function get_grade_color($grade) {
+    switch ($grade) {
+        case 'A': return '#008000'; // green
+        case 'B': return '#0000FF'; // blue
+        case 'S': return '#FFA500'; // orange
+        case 'F': return '#FF0000'; // red
+        default: return '#FF0000';
+    }
 }
 ?>
 
@@ -401,6 +446,18 @@ if ($selected_subject_id) {
                     <div class="stat-number"><?php echo count(array_filter($students, function($s) { return empty($s['marks']); })); ?></div>
                     <div class="stat-label">Pending</div>
                 </div>
+                <div class="stat-card">
+                    <div class="stat-number"><?php echo $min_marks; ?></div>
+                    <div class="stat-label">Min Marks</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number"><?php echo $max_marks; ?></div>
+                    <div class="stat-label">Max Marks</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number"><?php echo $avg_marks; ?></div>
+                    <div class="stat-label">Avg Marks</div>
+                </div>
             </div>
 
             <div class="content-card">
@@ -415,21 +472,33 @@ if ($selected_subject_id) {
                             <table class="data-table">
                                 <thead>
                                     <tr>
+                                        <th>Rank</th>
                                         <th>Student ID</th>
                                         <th>Student Name</th>
-                                        <th>Current Marks</th>
+                                        <th>Marks</th>
+                                        <th>Grade</th>
                                         <th>Enter Marks (0-100)</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <?php foreach ($students as $s): ?>
+                                    <?php 
+                                        $grade = !empty($s['marks']) ? get_grade($s['marks']) : null;
+                                        $color = $grade ? get_grade_color($grade) : null;
+                                    ?>
                                     <tr>
+                                        <td><?php echo isset($ranks[$s['id']]) ? $ranks[$s['id']] : '-'; ?></td>
                                         <td><strong><?php echo $s['id']; ?></strong></td>
                                         <td><?php echo htmlspecialchars($s['name']); ?></td>
+                                        <td><?php echo !empty($s['marks']) ? $s['marks'] . '/100' : 'Not Graded'; ?></td>
                                         <td>
-                                            <span style="background: <?php echo !empty($s['marks']) ? '#0000FF' : '#FF0000'; ?>; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: bold;">
-                                                <?php echo !empty($s['marks']) ? $s['marks'] . '/100' : 'Not Graded'; ?>
-                                            </span>
+                                            <?php if ($grade): ?>
+                                                <span style="background: <?php echo $color; ?>; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: bold;">
+                                                    <?php echo $grade; ?>
+                                                </span>
+                                            <?php else: ?>
+                                                -
+                                            <?php endif; ?>
                                         </td>
                                         <td>
                                             <input type="number" 

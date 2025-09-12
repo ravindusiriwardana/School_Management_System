@@ -1,6 +1,6 @@
 <?php
 session_start();
-include '../dbConnection.php';
+include '../config/dbConnection.php';
 
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'teacher') {
     header("Location: ../login.php");
@@ -84,10 +84,10 @@ function get_grade($mark) {
 
 function get_grade_color($grade) {
     switch ($grade) {
-        case 'A': return '#008000'; // green
-        case 'B': return '#0000FF'; // blue
-        case 'S': return '#FFA500'; // orange
-        case 'F': return '#FF0000'; // red
+        case 'A': return '#008000'; 
+        case 'B': return '#0000FF'; 
+        case 'S': return '#FFA500'; 
+        case 'F': return '#FF0000'; 
         default: return '#FF0000';
     }
 }

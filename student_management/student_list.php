@@ -1,13 +1,17 @@
 <?php
 session_start();
-include '../dbConnection.php';
-include '../navbar.php';
 
+// Fix paths for MAMP
+include __DIR__ . './../config/dbConnection.php';
+include __DIR__ . '/../navbar.php';
+
+// Make sure only teachers can access
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'teacher') {
     header("Location: ../login.php");
     exit();
 }
 
+// Fetch all students
 $result = $conn->query("SELECT * FROM students");
 ?>
 
@@ -19,11 +23,7 @@ $result = $conn->query("SELECT * FROM students");
     <title>Students List - LMS</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -77,10 +77,7 @@ $result = $conn->query("SELECT * FROM students");
             overflow: hidden;
         }
 
-        .add-student-btn i {
-            margin-right: 8px;
-            font-size: 16px;
-        }
+        .add-student-btn i { margin-right: 8px; font-size: 16px; }
 
         .add-student-btn:hover {
             background: #15803d;
@@ -91,21 +88,15 @@ $result = $conn->query("SELECT * FROM students");
         .add-student-btn::before {
             content: '';
             position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
             transition: left 0.6s ease;
         }
 
-        .add-student-btn:hover::before {
-            left: 100%;
-        }
+        .add-student-btn:hover::before { left: 100%; }
 
-        .table-container {
-            overflow-x: auto;
-        }
+        .table-container { overflow-x: auto; }
 
         table {
             width: 100%;
@@ -130,14 +121,8 @@ $result = $conn->query("SELECT * FROM students");
             letter-spacing: 0.5px;
         }
 
-        tr {
-            border-bottom: 1px solid #e2e8f0;
-            transition: all 0.3s ease;
-        }
-
-        tr:hover {
-            background: #e6f0fa;
-        }
+        tr { border-bottom: 1px solid #e2e8f0; transition: all 0.3s ease; }
+        tr:hover { background: #e6f0fa; }
 
         .action-links a {
             text-decoration: none;
@@ -147,49 +132,20 @@ $result = $conn->query("SELECT * FROM students");
             transition: all 0.3s ease;
         }
 
-        .action-links .edit {
-            color: #2563eb;
-        }
-
-        .action-links .edit:hover {
-            color: #1e40af;
-        }
-
-        .action-links .delete {
-            color: #dc2626;
-        }
-
-        .action-links .delete:hover {
-            color: #b91c1c;
-        }
+        .action-links .edit { color: #2563eb; }
+        .action-links .edit:hover { color: #1e40af; }
+        .action-links .delete { color: #dc2626; }
+        .action-links .delete:hover { color: #b91c1c; }
 
         @media (max-width: 768px) {
-            .container {
-                margin: 10px;
-                padding: 30px 20px;
-            }
-
-            .header {
-                flex-direction: column;
-                gap: 20px;
-                text-align: center;
-            }
-
-            .header-title {
-                font-size: 24px;
-            }
-
-            th, td {
-                font-size: 14px;
-                padding: 12px 15px;
-            }
+            .container { margin: 10px; padding: 30px 20px; }
+            .header { flex-direction: column; gap: 20px; text-align: center; }
+            .header-title { font-size: 24px; }
+            th, td { font-size: 14px; padding: 12px 15px; }
         }
 
         @media (max-width: 480px) {
-            th, td {
-                font-size: 12px;
-                padding: 10px 12px;
-            }
+            th, td { font-size: 12px; padding: 10px 12px; }
         }
 
         @keyframes fadeInUp {
@@ -217,19 +173,23 @@ $result = $conn->query("SELECT * FROM students");
                     </tr>
                 </thead>
                 <tbody>
-                    <?php while ($row = $result->fetch_assoc()): ?>
-                        <tr>
-                            <td><?php echo htmlspecialchars($row['id']); ?></td>
-                            <td><?php echo htmlspecialchars($row['name']); ?></td>
-                            <td><?php echo htmlspecialchars($row['age']); ?></td>
-                            <td><?php echo htmlspecialchars($row['grade']); ?></td>
-                            <td><?php echo htmlspecialchars($row['email']); ?></td>
-                            <td class="action-links">
-                                <a href="edit_student.php?id=<?php echo $row['id']; ?>" class="edit">Edit</a>
-                                <a href="delete_student.php?id=<?php echo $row['id']; ?>" class="delete" onclick="return confirm('Are you sure?');">Delete</a>
-                            </td>
-                        </tr>
-                    <?php endwhile; ?>
+                    <?php if ($result && $result->num_rows > 0): ?>
+                        <?php while ($row = $result->fetch_assoc()): ?>
+                            <tr>
+                                <td><?php echo htmlspecialchars($row['id']); ?></td>
+                                <td><?php echo htmlspecialchars($row['name']); ?></td>
+                                <td><?php echo htmlspecialchars($row['age']); ?></td>
+                                <td><?php echo htmlspecialchars($row['grade']); ?></td>
+                                <td><?php echo htmlspecialchars($row['email']); ?></td>
+                                <td class="action-links">
+                                    <a href="edit_student.php echo $row['id']; ?>" class="edit">Edit</a>
+                                    <a href="delete_student.php?id=<?php echo $row['id']; ?>" class="delete" onclick="return confirm('Are you sure?');">Delete</a>
+                                </td>
+                            </tr>
+                        <?php endwhile; ?>
+                    <?php else: ?>
+                        <tr><td colspan="6" style="text-align:center;">No students found.</td></tr>
+                    <?php endif; ?>
                 </tbody>
             </table>
         </div>

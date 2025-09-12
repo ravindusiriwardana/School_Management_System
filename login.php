@@ -1,11 +1,11 @@
 <?php
 session_start();
-include 'dbConnection.php';
+include './config/dbConnection.php';
 
 if (isset($_POST['login'])) {
     $email = $_POST['email'];
     $password = $_POST['password'];
-    $role = $_POST['role']; // student or teacher
+    $role = $_POST['role']; 
 
     if ($role === 'student') {
         $stmt = $conn->prepare("SELECT * FROM students WHERE email = ?");
@@ -25,9 +25,9 @@ if (isset($_POST['login'])) {
         $_SESSION['role'] = $role;
 
         if ($role === 'student') {
-            header("Location: student_management/student_profile.php");
+            header("Location: ./student_management/students_profile.php");
         } else {
-            header("Location: teacher_management/teachers_profile.php");
+            header("Location: ./teacher_management/teachers_profile.php");
         }
         exit();
     } else {

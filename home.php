@@ -147,22 +147,7 @@
                 <img src="https://via.placeholder.com/24?text=Login" alt="Login icon">
                 Login
             </a>
-            <a href="student_management/add_student.php" class="nav-item">
-                <img src="https://via.placeholder.com/24?text=Student" alt="Student icon">
-                Add Student
-            </a>
-            <a href="teacher_management/add_teachers.php" class="nav-item">
-                <img src="https://via.placeholder.com/24?text=Teacher" alt="Teacher icon">
-                Add Teacher
-            </a>
-            <a href="student_management/student_list.php" class="nav-item">
-                <img src="https://via.placeholder.com/24?text=List" alt="Student list icon">
-                Student List
-            </a>
-            <a href="teacher_management/teachers_list.php" class="nav-item">
-                <img src="https://via.placeholder.com/24?text=List" alt="Teacher list icon">
-                Teacher List
-            </a>
+        
         </nav>
     </main>
     <footer>

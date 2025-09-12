@@ -1,6 +1,6 @@
 <?php
 session_start();
-include '../dbConnection.php';
+include '../config/dbConnection.php';
 
 // Make sure only teachers can access
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'teacher') {

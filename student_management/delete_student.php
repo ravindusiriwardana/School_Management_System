@@ -1,5 +1,5 @@
 <?php
-include '../dbConnection.php';
+include '../config/dbConnection.php';
 
 // Get student ID from URL
 $id = $_GET['id'] ?? null;

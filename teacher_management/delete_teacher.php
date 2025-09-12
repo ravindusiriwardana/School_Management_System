@@ -1,5 +1,5 @@
 <?php
-include '../dbConnection.php';
+include '../config/dbConnection.php';
 
 $id = $_GET['id'] ?? null;
 
@@ -14,7 +14,7 @@ $stmt->bind_param("i", $id);
 
 if ($stmt->execute()) {
     // Redirect to the correct teacher list page
-    header("Location: teachers_list.php");
+    header("Location: /teacher_management/teachers_list.php");
     exit();
 } else {
     echo "Error deleting teacher: " . $conn->error;

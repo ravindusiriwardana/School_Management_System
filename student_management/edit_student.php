@@ -1,120 +1,52 @@
 <?php
 session_start();
 include '../config/dbConnection.php';
+include __DIR__ . '/../navbar.php';
 
-// Ensure only students can access
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'student') {
+// Ensure only teachers can access
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'teacher') {
     header("Location: ../login.php");
     exit();
 }
 
-$id = $_SESSION['user_id'];
-$success_message = '';
-$error_message = '';
+// Get student ID
+if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
+    die("Invalid student ID.");
+}
+$student_id = intval($_GET['id']);
+
+// Handle form submission for update
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $name = trim($_POST['name']);
+    $email = trim($_POST['email']);
+    $age = intval($_POST['age']);
+    $grade = trim($_POST['grade']);
+
+    // Validate inputs
+    if (!empty($name) && !empty($email) && $age >= 16 && $age <= 25 && !empty($grade)) {
+        $stmt = $conn->prepare("UPDATE students SET name=?, email=?, age=?, grade=? WHERE id=?");
+        $stmt->bind_param("ssisi", $name, $email, $age, $grade, $student_id);
+
+        if ($stmt->execute()) {
+            header("Location: student_list.php?success=1");
+            exit();
+        } else {
+            $error = "Failed to update student. Please try again.";
+        }
+    } else {
+        $error = "Please fill all fields correctly.";
+    }
+}
 
 // Fetch student data
 $stmt = $conn->prepare("SELECT * FROM students WHERE id = ?");
-$stmt->bind_param("i", $id);
+$stmt->bind_param("i", $student_id);
 $stmt->execute();
 $result = $stmt->get_result();
-$row = $result->fetch_assoc();
+$student = $result->fetch_assoc();
 
-if (!$row) {
-    echo "Student not found.";
-    exit();
-}
-
-// Handle form submission
-if (isset($_POST['update'])) {
-    $name = trim($_POST['name'] ?? '');
-    $age = intval($_POST['age'] ?? 0);
-    $grade = trim($_POST['grade'] ?? '');
-    $email = trim($_POST['email'] ?? '');
-    $phone = trim($_POST['phone'] ?? '');
-    $address = trim($_POST['address'] ?? '');
-    $bio = trim($_POST['bio'] ?? '');
-
-    $errors = [];
-
-    if (strlen($name) < 2) {
-        $errors[] = "Name must be at least 2 characters long.";
-    }
-
-    if ($age < 16 || $age > 25) {
-        $errors[] = "Please enter a valid age (16-25).";
-    }
-
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $errors[] = "Please enter a valid email address.";
-    }
-
-    // Check if email exists excluding current user
-    $emailCheck = $conn->prepare("SELECT id FROM students WHERE email = ? AND id != ?");
-    $emailCheck->bind_param("si", $email, $id);
-    $emailCheck->execute();
-    if ($emailCheck->get_result()->num_rows > 0) {
-        $errors[] = "This email is already registered.";
-    }
-
-    // Handle profile picture
-    $profile_picture = $row['profile_picture'] ?? '';
-    if (!empty($_FILES['profile_picture']['name']) && $_FILES['profile_picture']['error'] == 0) {
-        $allowed = ['jpg', 'jpeg', 'png', 'gif'];
-        $filename = $_FILES['profile_picture']['name'];
-        $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
-
-        if (!in_array($ext, $allowed)) {
-            $errors[] = "Only JPG, JPEG, PNG & GIF files are allowed.";
-        } elseif ($_FILES['profile_picture']['size'] > 5 * 1024 * 1024) {
-            $errors[] = "Profile picture must be less than 5MB.";
-        } else {
-            $new_filename = 'student_' . $id . '_' . time() . '.' . $ext;
-            $upload_dir = '../uploads/';
-            if (!file_exists($upload_dir)) mkdir($upload_dir, 0777, true);
-            $upload_path = $upload_dir . $new_filename;
-
-            if (move_uploaded_file($_FILES['profile_picture']['tmp_name'], $upload_path)) {
-                if ($profile_picture && file_exists($upload_dir . $profile_picture)) {
-                    unlink($upload_dir . $profile_picture);
-                }
-                $profile_picture = $new_filename;
-            } else {
-                $errors[] = "Failed to upload profile picture.";
-            }
-        }
-    }
-
-    if (empty($errors)) {
-        // Build update query
-        $fields = "name=?, age=?, grade=?, email=?, profile_picture=?, phone=?, address=?, bio=?";
-        $stmt = $conn->prepare("UPDATE students SET $fields WHERE id=?");
-        $stmt->bind_param(
-            "sissssssi",
-            $name,
-            $age,
-            $grade,
-            $email,
-            $profile_picture,
-            $phone,
-            $address,
-            $bio,
-            $id
-        );
-
-        if ($stmt->execute()) {
-            $_SESSION['user_name'] = $name;
-            $success_message = "Profile updated successfully!";
-            // Refresh data
-            $stmt = $conn->prepare("SELECT * FROM students WHERE id = ?");
-            $stmt->bind_param("i", $id);
-            $stmt->execute();
-            $row = $stmt->get_result()->fetch_assoc();
-        } else {
-            $error_message = "Error updating profile. Please try again.";
-        }
-    } else {
-        $error_message = implode("<br>", $errors);
-    }
+if (!$student) {
+    die("Student not found.");
 }
 ?>
 
@@ -123,111 +55,164 @@ if (isset($_POST['update'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Profile - Student Portal</title>
+    <title>Edit Student - LMS</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        /* Styles same as before, omitted here for brevity */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f8fafc;
+            min-height: 100vh;
+        }
+
+        /* Navbar fixed at top */
+        .navbar-container {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+            background: #1e293b;
+        }
+
+        /* Page wrapper for spacing below navbar */
+        .page-wrapper {
+            padding-top: 80px; /* Space for navbar */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding-bottom: 40px;
+        }
+
+        .edit-container {
+            width: 100%;
+            max-width: 600px;
+            background: white;
+            padding: 40px 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e5e7eb;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .edit-title {
+            font-size: 26px;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #1e293b;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            font-size: 15px;
+            background: #f9fafb;
+            transition: border 0.3s ease;
+        }
+
+        .form-input:focus {
+            border-color: #2563eb;
+            outline: none;
+            background: white;
+        }
+
+        .btn {
+            padding: 12px 18px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+        }
+
+        .btn-primary:hover {
+            background: #1e40af;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #e5e7eb;
+            color: #1e293b;
+            text-decoration: none;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e1;
+            transform: translateY(-2px);
+        }
+
+        .error {
+            color: red;
+            margin-bottom: 10px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
 <body>
-<div class="edit-container">
-    <div class="edit-header">
-        <div class="profile-avatar" onclick="document.getElementById('profilePicInput').click();">
-            <?php if (!empty($row['profile_picture'])): ?>
-                <img src="../uploads/<?php echo htmlspecialchars($row['profile_picture']); ?>" alt="Profile Picture" id="profilePreview">
-            <?php else: ?>
-                <i class="fas fa-user-graduate"></i>
-            <?php endif; ?>
-            <div class="avatar-upload"><i class="fas fa-camera"></i></div>
+    <!-- Navbar -->
+    <div class="navbar-container">
+        <?php include __DIR__ . '/../navbar.php'; ?>
+    </div>
+
+    <!-- Page Wrapper -->
+    <div class="page-wrapper">
+        <div class="edit-container">
+            <h2 class="edit-title">Edit Student</h2>
+            <?php if (!empty($error)) echo "<p class='error'>$error</p>"; ?>
+            <form method="POST">
+                <div class="form-group">
+                    <label class="form-label">Full Name</label>
+                    <input type="text" name="name" class="form-input" value="<?php echo htmlspecialchars($student['name']); ?>" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" name="email" class="form-input" value="<?php echo htmlspecialchars($student['email']); ?>" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Age</label>
+                    <input type="number" name="age" class="form-input" value="<?php echo htmlspecialchars($student['age']); ?>" required min="16" max="25">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Grade/Class</label>
+                    <input type="text" name="grade" class="form-input" value="<?php echo htmlspecialchars($student['grade']); ?>" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Update</button>
+                <a href="student_list.php" class="btn btn-secondary">Cancel</a>
+            </form>
         </div>
-        <h1 class="edit-title">Edit Profile</h1>
-        <p class="edit-subtitle">Update Your Information</p>
     </div>
-    <div class="edit-body">
-        <?php if ($success_message): ?>
-            <div class="alert alert-success"><i class="fas fa-check-circle"></i> <?php echo $success_message; ?></div>
-        <?php endif; ?>
-        <?php if ($error_message): ?>
-            <div class="alert alert-error"><i class="fas fa-exclamation-circle"></i> <?php echo $error_message; ?></div>
-        <?php endif; ?>
-        <form method="POST" enctype="multipart/form-data" onsubmit="return validateForm()">
-            <input type="file" id="profilePicInput" name="profile_picture" class="avatar-input" accept="image/*" onchange="previewImage(event)">
-            <div class="form-grid">
-                <div class="form-group">
-                    <label class="form-label" for="name"><i class="fas fa-user"></i> Full Name *</label>
-                    <input type="text" id="name" name="name" class="form-input" value="<?php echo htmlspecialchars($row['name']); ?>" required minlength="2" maxlength="100">
-                </div>
-                <div class="form-group">
-                    <label class="form-label" for="email"><i class="fas fa-envelope"></i> Email *</label>
-                    <input type="email" id="email" name="email" class="form-input" value="<?php echo htmlspecialchars($row['email']); ?>" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label" for="age"><i class="fas fa-calendar-alt"></i> Age *</label>
-                    <input type="number" id="age" name="age" class="form-input" value="<?php echo $row['age']; ?>" required min="16" max="25">
-                </div>
-                <div class="form-group">
-                    <label class="form-label" for="grade"><i class="fas fa-graduation-cap"></i> Grade/Class *</label>
-                    <input type="text" id="grade" name="grade" class="form-input" value="<?php echo htmlspecialchars($row['grade']); ?>" required maxlength="50">
-                </div>
-                <div class="form-group">
-                    <label class="form-label" for="phone"><i class="fas fa-phone"></i> Phone</label>
-                    <input type="tel" id="phone" name="phone" class="form-input" value="<?php echo htmlspecialchars($row['phone'] ?? ''); ?>" pattern="[0-9]{10,15}" placeholder="10-15 digits">
-                </div>
-                <div class="form-group">
-                    <label class="form-label" for="address"><i class="fas fa-map-marker-alt"></i> Address</label>
-                    <input type="text" id="address" name="address" class="form-input" value="<?php echo htmlspecialchars($row['address'] ?? ''); ?>" maxlength="255">
-                </div>
-                <div class="form-group full-width">
-                    <label class="form-label" for="bio"><i class="fas fa-align-left"></i> About Me</label>
-                    <textarea id="bio" name="bio" class="form-input" maxlength="500"><?php echo htmlspecialchars($row['bio'] ?? ''); ?></textarea>
-                    <div class="char-counter"><span id="charCount">0</span>/500</div>
-                </div>
-            </div>
-            <div class="action-buttons">
-                <button type="submit" name="update" class="btn btn-primary"><i class="fas fa-save"></i> Save Changes</button>
-                <a href="student_profile.php" class="btn btn-secondary"><i class="fas fa-times"></i> Back</a>
-            </div>
-        </form>
-    </div>
-</div>
-<script>
-    function updateCharCount() {
-        const bio = document.getElementById('bio');
-        const charCount = document.getElementById('charCount');
-        charCount.textContent = bio.value.length;
-        charCount.style.color = bio.value.length > 450 ? '#dc2626' : '#6b7280';
-    }
-    document.addEventListener('DOMContentLoaded', updateCharCount);
-    document.getElementById('bio').addEventListener('keyup', updateCharCount);
-
-    function previewImage(event) {
-        const file = event.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                document.querySelector('.profile-avatar').innerHTML = `
-                    <img src="${e.target.result}" alt="Profile Picture" id="profilePreview">
-                    <div class="avatar-upload"><i class="fas fa-camera"></i></div>
-                `;
-            }
-            reader.readAsDataURL(file);
-        }
-    }
-
-    function validateForm() {
-        const name = document.getElementById('name').value.trim();
-        const email = document.getElementById('email').value.trim();
-        const age = parseInt(document.getElementById('age').value);
-        const grade = document.getElementById('grade').value.trim();
-        const phone = document.getElementById('phone').value.trim();
-
-        if (name.length < 2) { alert('Name must be at least 2 characters'); return false; }
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { alert('Invalid email'); return false; }
-        if (age < 16 || age > 25) { alert('Age must be 16-25'); return false; }
-        if (grade.length < 1) { alert('Enter grade'); return false; }
-        if (phone && !/^\d{10,15}$/.test(phone)) { alert('Phone must be 10-15 digits'); return false; }
-        return true;
-    }
-</script>
 </body>
 </html>

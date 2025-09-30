@@ -35,13 +35,41 @@
             margin-bottom: 0.5rem;
         }
 
-        /* Hero section with background image */
+        /* Hero section with hover effect */
         .hero {
-            background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('https://via.placeholder.com/1200x400?text=Classroom+Learning') center/cover no-repeat;
+            position: relative;
+            background: url("src/LMS-for-teaching.jpg") center/cover no-repeat;
             color: white;
             text-align: center;
             padding: 4rem 1rem;
             margin-bottom: 2rem;
+            overflow: hidden;
+            transition: transform 0.5s ease;
+        }
+
+        /* Overlay for darkening effect */
+        .hero::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.3);
+            transition: background 0.5s ease;
+        }
+
+        /* Hover zoom & dark overlay */
+        .hero:hover {
+            transform: scale(1.05);
+        }
+
+        .hero:hover::before {
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        /* Hero text styling */
+        .hero h2,
+        .hero p {
+            position: relative;
+            z-index: 1;
         }
 
         .hero h2 {
@@ -147,7 +175,6 @@
                 <img src="https://via.placeholder.com/24?text=Login" alt="Login icon">
                 Login
             </a>
-        
         </nav>
     </main>
     <footer>

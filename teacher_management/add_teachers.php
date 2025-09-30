@@ -1,5 +1,6 @@
 <?php
-include '../dbConnection.php';
+include '../config/dbConnection.php';
+
 
 if (isset($_POST['add'])) {
     $name = $_POST['name'];
